@@ -13,7 +13,7 @@
 loadkeys us
 
 #		1.4 Verify the boot mode
-# Will do later with error checking.
+# TODO: Will do later with error checking.
 
 #		1.5 Connect to the internet
 # You should have done this already to get this script.
@@ -41,8 +41,10 @@ mount /dev/nvme0n1p3 /mnt/home
 pacman -Syy
 pacman -S reflector
 reflector --country --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
+
 #		2.2 Install essential packages
-pacstrap /mnt base base-devel linux linux-firmware exfat-utils connman nano man-db man-pages texinfo
+pacstrap /mnt base base-devel linux linux-firmware exfat-utils connman nano man-db man-pages texinfo amd-ucode
+
 #	3 Configure the system
 
 #		3.1 Fstab
@@ -72,7 +74,7 @@ cat >> /mnt/etc/hosts <<EOF
 EOF
 
 #		3.6 Initramfs
-# We'll get to this when I get to Hibernation.
+# TODO: We'll get to this when I get to Hibernation.
 
 #		3.7 Root password
 echo -n "Enter root password: "
@@ -90,8 +92,74 @@ title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
+options	root=UUID=`findmnt -rno UUID /mnt/` rw
 EOF
-options	root=UUID=[findmnt -rno UUID /mnt/] rw
+
 #	4 Reboot
 
 #	5 Post-installation
+#	1 System administration
+#		1.1 Users and groups
+#		1.2 Privilege elevation
+#		1.3 Service management
+#		1.4 System maintenance
+#	2 Package management
+#		2.1 pacman
+#		2.2 Repositories
+#		2.3 Mirrors
+#		2.4 Arch Build System
+#		2.5 Arch User Repository
+#	3 Booting
+#		3.1 Hardware auto-recognition
+#		3.2 Microcode
+#		3.3 Retaining boot messages
+#		3.4 Num Lock activation
+#	4 Graphical user interface
+#		4.1 Display server
+#		4.2 Display drivers
+#		4.3 Desktop environments
+#		4.4 Window managers
+#		4.5 Display manager
+#		4.6 User directories
+#	5 Power management
+#		5.1 ACPI events
+#		5.2 CPU frequency scaling
+#		5.3 Laptops
+#		5.4 Suspend and hibernate
+#	6 Multimedia
+#		6.1 Sound
+#		6.2 Browser plugins
+#		6.3 Codecs
+#	7 Networking
+#		7.1 Clock synchronization
+#		7.2 DNS security
+#		7.3 Setting up a firewall
+#		7.4 Resource sharing
+#	8 Input devices
+#		8.1 Keyboard layouts
+#		8.2 Mouse buttons
+#		8.3 Laptop touchpads
+#		8.4 TrackPoints
+#	9 Optimization
+#		9.1 Benchmarking
+#		9.2 Improving performance
+#		9.3 Solid state drives
+#	10 System service
+#		10.1 File index and search
+#		10.2 Local mail delivery
+#		10.3 Printing
+#	11 Appearance
+#		11.1 Fonts
+#		11.2 GTK and Qt themes
+#	12 Console improvements
+#		12.1 Tab-completion enhancements
+#		12.2 Aliases
+#		12.3 Alternative shells
+#		12.4 Bash additions
+#		12.5 Colored output
+#		12.6 Compressed files
+#		12.7 Console prompt
+#		12.8 Emacs shell
+#		12.9 Mouse support
+#		12.10 Scrollback buffer
+#		12.11 Session management
