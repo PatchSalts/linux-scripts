@@ -69,7 +69,7 @@ mount /dev/nvme0n1p3 /mnt/home
 #		2.1 Select the mirrors
 pacman -Sy
 pacman --sync --noconfirm reflector
-reflector --country --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
+reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
 #		2.2 Install essential packages
 pacstrap /mnt base base-devel linux linux-firmware exfat-utils connman nano man-db man-pages texinfo amd-ucode
@@ -106,22 +106,22 @@ EOF
 # TODO: We'll get to this when I get to Hibernation.
 
 #		3.7 Root password
-echo -n "Enter root password: "
+echo "ROOT PASSWORD"
 arch-chroot /mnt passwd
 
 #		3.8 Boot loader
 arch-chroot /mnt bootctl install
-cat >> /boot/loader/loader.conf <<EOF
+cat >> /mnt/boot/loader/loader.conf <<EOF
 default	arch.conf
 timeout	1
 editor	no
 EOF
-cat >> /boot/loader/entries/arch.conf <<EOF
+cat >> /mnt/boot/loader/entries/arch.conf <<EOF
 title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
-options	root=UUID=`findmnt -rno UUID /` rw
+options	root=UUID=`findmnt -rno UUID /mnt/` rw
 EOF
 
 echo "SUCCESS"
