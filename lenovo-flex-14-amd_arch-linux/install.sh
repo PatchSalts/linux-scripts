@@ -21,6 +21,11 @@ loadkeys us
 #		1.6 Update the system clock
 timedatectl set-ntp true
 
+# Partition scheme:
+# /dev/nvme0n1p1	/boot	260MB	FAT32
+# /dev/nvme0n1p2	/	35GB	ext4
+# /dev/nvme0n1p3	/home	MAX	ext4
+
 #		1.7 Partition the disks
 fdisk /dev/nvme0n1 <<EOF
 g
@@ -63,7 +68,7 @@ mount /dev/nvme0n1p3 /mnt/home
 
 #		2.1 Select the mirrors
 pacman -Syy
-pacman -S reflector
+yes | pacman -S reflector
 reflector --country --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
 #		2.2 Install essential packages
