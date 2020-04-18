@@ -33,17 +33,14 @@ n
 1
 
 +260M
-Y
 n
 2
 
 +35G
-Y
 n
 3
 
 
-Y
 t
 1
 1
@@ -71,7 +68,7 @@ mount /dev/nvme0n1p3 /mnt/home
 
 #		2.1 Select the mirrors
 pacman -Sy
-yes | pacman -S reflector
+pacman --sync --noconfirm reflector
 reflector --country --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
 #		2.2 Install essential packages
