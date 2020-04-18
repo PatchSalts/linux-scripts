@@ -22,7 +22,31 @@ loadkeys us
 timedatectl set-ntp true
 
 #		1.7 Partition the disks
-sfdisk --force /dev/nvme0n1 < partitions
+fdisk /dev/nvme0n1 <<EOF
+g
+n
+1
+
++260M
+t
+1
+1
+n
+2
+
++35G
+t
+2
+24
+n
+3
+
+
+t
+3
+28
+w
+EOF
 
 #		1.8 Format the partitions
 mkfs.fat -F 32 /dev/nvme0n1p1
