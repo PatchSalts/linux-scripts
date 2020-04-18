@@ -67,7 +67,7 @@ mount /dev/nvme0n1p3 /mnt/home
 #	2 Installation
 
 #		2.1 Select the mirrors
-pacman -Syy
+pacman -Sy
 yes | pacman -S reflector
 reflector --country --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
