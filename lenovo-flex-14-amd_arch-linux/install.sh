@@ -27,26 +27,29 @@ timedatectl set-ntp true
 # /dev/nvme0n1p3	/home	MAX	ext4
 
 #		1.7 Partition the disks
-fdisk /dev/nvme0n1 <<EOF
+fdisk /dev/nvme0n1 --wipe always <<EOF
 g
 n
 1
 
 +260M
-t
-1
-1
+Y
 n
 2
 
 +35G
-t
-2
-24
+Y
 n
 3
 
 
+Y
+t
+1
+1
+t
+2
+24
 t
 3
 28
@@ -54,9 +57,9 @@ w
 EOF
 
 #		1.8 Format the partitions
-mkfs.fat -F 32 /dev/nvme0n1p1
-mkfs.ext4 /dev/nvme0n1p2
-mkfs.ext4 /dev/nvme0n1p3
+yes | mkfs.fat -F 32 /dev/nvme0n1p1
+yes | mkfs.ext4 /dev/nvme0n1p2
+yes | mkfs.ext4 /dev/nvme0n1p3
 
 #		1.9 Mount the file systems
 mount /dev/nvme0n1p2 /mnt
@@ -82,21 +85,23 @@ genfstab -U /mnt >> /mnt/etc/fstab
 #		3.2 Chroot
 # Probably shouldn't be done, scripting across root boundaries is iffy.
 # Thankfully we can run individual commands as chroot and immediately back out.
+# Unless...
+arch-chroot /mnt <<-EOF
 
 #		3.3 Time zone
-arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
-arch-chroot /mnt hwclock --systohc
+ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+hwclock --systohc
 
 #		3.4 Localization
-sed -i "/^#en_US.UTF-8/ cen_US.UTF-8" /mnt/etc/locale.gen
-sed -i "/^#ja_JP.UTF-8/ cja_JP.UTF-8" /mnt/etc/locale.gen
-arch-chroot /mnt locale-gen
-echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
-echo "KEYMAP=us" > /mnt/etc/vconsole.conf
+sed -i "/^#en_US.UTF-8 UTF-8/ cen_US.UTF-8 UTF-8" /etc/locale.gen
+sed -i "/^#ja_JP.UTF-8 UTF-8/ cja_JP.UTF-8 UTF-8" /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+echo "KEYMAP=us" > /etc/vconsole.conf
 
 #		3.5 Network configuration
-echo "pps3941-laptop" > /mnt/etc/hostname
-cat >> /mnt/etc/hosts <<EOF
+echo "pps3941-laptop" > /etc/hostname
+cat >> /etc/hosts <<-EOF
 127.0.0.1	localhost
 ::1		localhost
 127.0.1.1	pps3941-laptop.localdomain	pps3941-laptop
@@ -107,22 +112,26 @@ EOF
 
 #		3.7 Root password
 echo -n "Enter root password: "
-arch-chroot /mnt passwd
+/mnt passwd
 
 #		3.8 Boot loader
-arch-chroot /mnt bootctl install
-cat >> /mnt/boot/loader/loader.conf <<EOF
+bootctl install
+cat >> /boot/loader/loader.conf <<-EOF
 default	arch.conf
 timeout	1
 editor	no
 EOF
-cat >> /mnt/boot/loader/entries/arch.conf <<EOF
+cat >> /boot/loader/entries/arch.conf <<-EOF
 title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
-options	root=UUID=`findmnt -rno UUID /mnt/` rw
+options	root=UUID=`findmnt -rno UUID /` rw
 EOF
+
+EOF
+
+echo "SUCCESS"
 
 #	4 Reboot
 
