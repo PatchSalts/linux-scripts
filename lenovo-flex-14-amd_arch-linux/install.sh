@@ -176,6 +176,7 @@ sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/locale.gen
 #		2.2 Repositories
 mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
 awk -v RS="\0" -v ORS="" '{gsub(/\#\[multilib\]\n\#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
+yay --sync --refresh
 
 #		2.3 Mirrors
 cat >> /mnt/etc/systemd/system/reflector.service <<EOF
