@@ -1,6 +1,8 @@
 #!/bin/bash
 # Arch install script for Lenovo Flex 14 (AMD)
 
+# Installation guide
+
 #	1 Pre-installation
 
 #		1.1 Verify signature
@@ -142,6 +144,8 @@ EOF
 #	5 Post-installation
 # We go to and complete the "General recommendations" page.
 
+# General recommendations
+
 #	1 System administration
 
 #		1.1 Users and groups
@@ -170,7 +174,8 @@ sed -i "/^#Color/ cColor" /mnt/etc/locale.gen
 sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/locale.gen
 
 #		2.2 Repositories
-# Irrelevant.
+mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
+awk -v RS="\0" -v ORS="" '{gsub(/\#\[multilib\]\n\#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
 
 #		2.3 Mirrors
 cat >> /mnt/etc/systemd/system/reflector.service <<EOF
@@ -197,12 +202,24 @@ arch-chroot /mnt chown pps3941:pps3941 /home/pps3941/yay.tar.gz /home/pps3941/ya
 arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si"
 
 #	3 Booting
+
 #		3.1 Hardware auto-recognition
+# Irrelevant.
+
 #		3.2 Microcode
+# Already taken care of in Installation guide 3.8 - Boot loader. 
+
 #		3.3 Retaining boot messages
+# Irrelevant.
+
 #		3.4 Num Lock activation
+# Irrelevant.
+
 #	4 Graphical user interface
+
 #		4.1 Display server
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xorg "
+
 #		4.2 Display drivers
 #		4.3 Desktop environments
 #		4.4 Window managers
