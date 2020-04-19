@@ -123,6 +123,18 @@ initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
 options	root=UUID=`findmnt -rno UUID /mnt/` rw
 EOF
+mkdir /mnt/etc/pacman.d/hooks
+cat >> /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = systemd
+
+[Action]
+Description = Updating systemd-boot
+When = PostTransaction
+Exec = /usr/bin/bootctl update 
+EOF
 
 #	4 Reboot
 # Yeahhhhhh no we're not going to do this.
@@ -134,12 +146,14 @@ EOF
 
 #		1.1 Users and groups
 arch-chroot /mnt useradd --groups wheel patch
+echo "====PATCH PASSWORD===="
 arch-chroot /mnt passwd patch
 arch-chroot /mnt useradd --create-home --groups wheel pps3941
+echo "====PPS3941 PASSWORD===="
 arch-chroot /mnt passwd pps3941
 
 #		1.2 Privilege elevation
-arch-chroot /mnt EDITOR=nano visudo
+sed -i "/^# %wheel ALL=(ALL) ALL/ c%wheel ALL=(ALL) ALL" /mnt/etc/sudoers
 
 #		1.3 Service management
 # Irrelevant.
@@ -157,6 +171,21 @@ sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/locale.gen
 # Irrelevant.
 
 #		2.3 Mirrors
+cat >> /mnt/etc/systemd/system/reflector.service <<EOF
+[Unit]
+Description=Pacman mirrorlist update
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
+
+[Install]
+RequiredBy=multi-user.target
+EOF
+arch-chroot /mnt systemctl enable reflector.service
+
 #		2.4 Arch Build System
 #		2.5 Arch User Repository
 #	3 Booting
