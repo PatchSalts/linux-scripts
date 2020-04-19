@@ -106,7 +106,7 @@ EOF
 # TODO: We'll get to this when I get to Hibernation.
 
 #		3.7 Root password
-echo "ROOT PASSWORD"
+echo "====ROOT PASSWORD===="
 arch-chroot /mnt passwd
 
 #		3.8 Boot loader
@@ -124,19 +124,38 @@ initrd	/initramfs-linux.img
 options	root=UUID=`findmnt -rno UUID /mnt/` rw
 EOF
 
-echo "SUCCESS"
-
 #	4 Reboot
+# Yeahhhhhh no we're not going to do this.
 
 #	5 Post-installation
+# We go to and complete the "General recommendations" page.
+
 #	1 System administration
+
 #		1.1 Users and groups
+arch-chroot /mnt useradd --groups wheel patch
+arch-chroot /mnt passwd patch
+arch-chroot /mnt useradd --create-home --groups wheel pps3941
+arch-chroot /mnt passwd pps3941
+
 #		1.2 Privilege elevation
+arch-chroot /mnt EDITOR=nano visudo
+
 #		1.3 Service management
+# Irrelevant.
+
 #		1.4 System maintenance
+# Irrelevant.
+
 #	2 Package management
+
 #		2.1 pacman
+sed -i "/^#Color/ cColor" /mnt/etc/locale.gen
+sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/locale.gen
+
 #		2.2 Repositories
+# Irrelevant.
+
 #		2.3 Mirrors
 #		2.4 Arch Build System
 #		2.5 Arch User Repository
