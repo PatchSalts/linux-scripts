@@ -106,7 +106,7 @@ EOF
 # TODO: We'll get to this when I get to Hibernation.
 
 #		3.7 Root password
-echo "====ROOT PASSWORD====\a"
+echo -e "====ROOT PASSWORD====\a"
 arch-chroot /mnt passwd
 
 #		3.8 Boot loader
@@ -146,16 +146,16 @@ EOF
 
 #		1.1 Users and groups
 arch-chroot /mnt useradd --groups wheel patch
-echo "====PATCH PASSWORD====\a"
+echo -e "====PATCH PASSWORD====\a"
 arch-chroot /mnt passwd patch
 arch-chroot /mnt useradd --create-home --groups wheel pps3941
-echo "====PPS3941 PASSWORD====\a"
+echo -e "====PPS3941 PASSWORD====\a"
 arch-chroot /mnt passwd pps3941
 
 #		1.2 Privilege elevation
 # Needs to be nopasswd so we can install yay. Will get fixed later on in the script.
 # TODO: Turn passwords back on.
-sed -i "/^# %wheel ALL=(ALL) ALL NOPASSWD: ALL/ c%wheel ALL=(ALL) ALL NOPASSWD: ALL" /mnt/etc/sudoers
+sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
 
 #		1.3 Service management
 # Irrelevant.
@@ -194,7 +194,7 @@ arch-chroot /mnt systemctl enable reflector.service
 curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/pps3941/yay.tar.gz
 tar xvf /mnt/home/pps3941/yay.tar.gz -C /mnt/home/pps3941
 arch-chroot /mnt chown pps3941:pps3941 /home/pps3941/yay.tar.gz /home/pps3941/yay
-arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si
+arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si"
 
 #	3 Booting
 #		3.1 Hardware auto-recognition
