@@ -149,7 +149,7 @@ EOF
 #	1 System administration
 
 #		1.1 Users and groups
-arch-chroot /mnt useradd --groups wheel patch
+arch-chroot /mnt useradd --create-home --groups wheel patch
 echo -e "====PATCH PASSWORD====\a"
 arch-chroot /mnt passwd patch
 arch-chroot /mnt useradd --create-home --groups wheel pps3941
@@ -219,13 +219,22 @@ arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si"
 #	4 Graphical user interface
 
 #		4.1 Display server
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xorg "
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xorg"
 
 #		4.2 Display drivers
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
+
 #		4.3 Desktop environments
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm lxqt oxygen-icons noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
+
 #		4.4 Window managers
 #		4.5 Display manager
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm sddm"
+arch-chroot /mnt systemctl enable sddm
+
 #		4.6 User directories
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xdg-user-dirs"
+
 #	5 Power management
 #		5.1 ACPI events
 #		5.2 CPU frequency scaling
