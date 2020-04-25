@@ -65,6 +65,10 @@ mount /dev/nvme0n1p2 /mnt
 mkdir /mnt/boot /mnt/home
 mount /dev/nvme0n1p1 /mnt/boot
 mount /dev/nvme0n1p3 /mnt/home
+fallocate -l 15G /mnt/swapfile
+chmod 600 /mnt/swapfile
+mkswap /mnt/swapfile
+swapon /mnt/swapfile
 
 #	2 Installation
 
@@ -105,7 +109,7 @@ cat >> /mnt/etc/hosts <<EOF
 EOF
 
 #		3.6 Initramfs
-# TODO: We'll get to this when I get to Hibernation.
+# Irrelevant.
 
 #		3.7 Root password
 echo -e "====ROOT PASSWORD====\a"
@@ -123,7 +127,7 @@ title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
-options	root=UUID=`findmnt -rno UUID /mnt/` rw
+options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno UUID /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
 EOF
 mkdir /mnt/etc/pacman.d/hooks
 cat >> /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
@@ -236,10 +240,22 @@ arch-chroot /mnt systemctl enable sddm
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xdg-user-dirs"
 
 #	5 Power management
+
 #		5.1 ACPI events
+# Managed by LXQt.
+
 #		5.2 CPU frequency scaling
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm tlp"
+arch-chroot /mnt systemctl enable tlp
+
 #		5.3 Laptops
+# TODO: A bunch of stuff in this article.
+
 #		5.4 Suspend and hibernate
+# Several things about this were taken care of in Installation guide 1.9 - Mount the file systems and 3.8 - Boot loader.
+sed -i '/^HOOKS=/ s/)/ resume)/' /mnt/etc/mkinitcpio.conf
+arch-chroot /mnt mkinitcpio -P
+
 #	6 Multimedia
 #		6.1 Sound
 #		6.2 Browser plugins
