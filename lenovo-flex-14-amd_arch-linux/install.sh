@@ -128,7 +128,7 @@ title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
-options	root=UUID=`findmnt -rno UUID /mnt/` resume=UUID=`findmnt -rno UUID -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
+options	root=UUID=`findmnt -rno UUID /mnt/` resume=UUID=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
 EOF
 mkdir /mnt/etc/pacman.d/hooks
 cat >> /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
