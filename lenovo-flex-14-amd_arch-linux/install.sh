@@ -78,7 +78,7 @@ pacman --sync --noconfirm reflector
 reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
 #		2.2 Install essential packages
-pacstrap /mnt base base-devel linux linux-firmware exfat-utils connman nano man-db man-pages texinfo amd-ucode
+pacstrap /mnt base base-devel linux linux-firmware exfat-utils connman wpa_supplicant nano man-db man-pages texinfo amd-ucode
 
 #	3 Configure the system
 
@@ -107,6 +107,7 @@ cat >> /mnt/etc/hosts <<EOF
 ::1		localhost
 127.0.1.1	pps3941-laptop.localdomain	pps3941-laptop
 EOF
+arch-chroot /mnt systemctl enable connman
 
 #		3.6 Initramfs
 # Irrelevant.
@@ -127,7 +128,7 @@ title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
-options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno UUID -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
+options	root=UUID=`findmnt -rno UUID /mnt/` resume=UUID=`findmnt -rno UUID -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
 EOF
 mkdir /mnt/etc/pacman.d/hooks
 cat >> /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
