@@ -180,7 +180,7 @@ sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/locale.gen
 
 #		2.2 Repositories
 mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
-awk -v RS="\0" -v ORS="" '{gsub(/\#\[multilib\]\n\#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
+awk -v RS="\0" -v ORS="" '{gsub(/#\[multilib\]\n#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
 arch-chroot /mnt pacman --sync --refresh
 
 #		2.3 Mirrors
@@ -258,11 +258,19 @@ sed -i '/^HOOKS=/ s/)/ resume)/' /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -P
 
 #	6 Multimedia
+
 #		6.1 Sound
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth"
+
 #		6.2 Browser plugins
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm firefox flashplugin"
+
 #		6.3 Codecs
 #	7 Networking
 #		7.1 Clock synchronization
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm chrony"
+arch-chroot /mnt systemctl enable chronyd
+
 #		7.2 DNS security
 #		7.3 Setting up a firewall
 #		7.4 Resource sharing
