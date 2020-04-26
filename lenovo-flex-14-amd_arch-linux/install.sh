@@ -118,12 +118,12 @@ arch-chroot /mnt passwd
 
 #		3.8 Boot loader
 arch-chroot /mnt bootctl install
-cat >> /mnt/boot/loader/loader.conf <<EOF
+cat > /mnt/boot/loader/loader.conf <<EOF
 default	arch.conf
 timeout	1
 editor	no
 EOF
-cat >> /mnt/boot/loader/entries/arch.conf <<EOF
+cat > /mnt/boot/loader/entries/arch.conf <<EOF
 title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/amd-ucode.img
@@ -131,7 +131,7 @@ initrd	/initramfs-linux.img
 options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
 EOF
 mkdir /mnt/etc/pacman.d/hooks
-cat >> /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
+cat > /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
 [Trigger]
 Type = Package
 Operation = Upgrade
@@ -184,7 +184,7 @@ awk -v RS="\0" -v ORS="" '{gsub(/#\[multilib\]\n#Include/, "[multilib]\nInclude"
 arch-chroot /mnt pacman --sync --refresh
 
 #		2.3 Mirrors
-cat >> /mnt/etc/systemd/system/reflector.service <<EOF
+cat > /mnt/etc/systemd/system/reflector.service <<EOF
 [Unit]
 Description=Pacman mirrorlist update
 Wants=network-online.target
@@ -254,7 +254,7 @@ arch-chroot /mnt systemctl enable tlp
 
 #		5.4 Suspend and hibernate
 # Several things about this were taken care of in Installation guide 1.9 - Mount the file systems and 3.8 - Boot loader.
-sed -i '/^HOOKS=/ s/)/ resume)/' /mnt/etc/mkinitcpio.conf
+sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -P
 
 #	6 Multimedia
