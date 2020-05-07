@@ -140,7 +140,7 @@ Target = systemd
 [Action]
 Description = Updating systemd-boot
 When = PostTransaction
-Exec = /usr/bin/bootctl update 
+Exec = /usr/bin/bootctl update
 EOF
 
 #	4 Reboot
@@ -206,6 +206,8 @@ curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/pps
 tar xvf /mnt/home/pps3941/yay.tar.gz -C /mnt/home/pps3941
 arch-chroot /mnt chown pps3941:pps3941 /home/pps3941/yay.tar.gz /home/pps3941/yay
 arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si"
+rm /mnt/home/pps3941/yay.tar.gz
+rm -rf /mnt/home/pps3941/yay
 
 #	3 Booting
 
@@ -213,7 +215,7 @@ arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si"
 # Irrelevant.
 
 #		3.2 Microcode
-# Already taken care of in Installation guide 3.8 - Boot loader. 
+# Already taken care of in Installation guide 3.8 - Boot loader.
 
 #		3.3 Retaining boot messages
 # Irrelevant.
@@ -267,6 +269,7 @@ arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm firefox flashplugin"
 
 #		6.3 Codecs
 #	7 Networking
+
 #		7.1 Clock synchronization
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm chrony"
 arch-chroot /mnt systemctl enable chronyd
@@ -282,7 +285,10 @@ arch-chroot /mnt systemctl enable chronyd
 #	9 Optimization
 #		9.1 Benchmarking
 #		9.2 Improving performance
+
 #		9.3 Solid state drives
+arch-chroot /mnt systemctl enable fstrim.timer
+
 #	10 System service
 #		10.1 File index and search
 #		10.2 Local mail delivery
