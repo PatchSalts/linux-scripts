@@ -25,8 +25,8 @@ timedatectl set-ntp true
 
 # Partition scheme:
 # /dev/sda1	/boot	260MB	FAT32
-# /dev/sda2	/	40GB	ext4
-# /dev/sda3	/home	MAX	ext4
+# /dev/sda2	/	MAX	ext4
+# /dev/sdb1	/home	MAX	ext4
 
 #		1.7 Partition the disks
 fdisk /dev/sda --wipe always <<EOF
@@ -41,16 +41,21 @@ t
 n
 2
 
-+40G
+
 t
 2
 24
+w
+EOF
+
+fdisk /dev/sdb --wipe always <<EOF
+g
 n
-3
+1
 
 
 t
-3
+1
 28
 w
 EOF
@@ -58,13 +63,13 @@ EOF
 #		1.8 Format the partitions
 yes | mkfs.fat -F 32 /dev/sda1
 yes | mkfs.ext4 /dev/sda2
-yes | mkfs.ext4 /dev/sda3
+yes | mkfs.ext4 /dev/sdb1
 
 #		1.9 Mount the file systems
 mount /dev/sda2 /mnt
 mkdir /mnt/boot /mnt/home
 mount /dev/sda1 /mnt/boot
-mount /dev/sda3 /mnt/home
+mount /dev/sdb1 /mnt/home
 fallocate -l 20G /mnt/swapfile
 chmod 600 /mnt/swapfile
 mkswap /mnt/swapfile
