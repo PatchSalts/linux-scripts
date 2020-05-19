@@ -111,6 +111,9 @@ EOF
 
 # Post-install.
 
+sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
+arch-chroot /mnt mkinitcpio -P
+
 arch-chroot /mnt useradd --create-home --groups wheel patch
 echo -e "====PATCH PASSWORD====\a"
 arch-chroot /mnt passwd patch
@@ -121,12 +124,29 @@ arch-chroot /mnt passwd pps3941
 # TODO: Turn passwords back on.
 sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
 
-sed -i "/^#Color/ cColor" /mnt/etc/locale.gen
-sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/locale.gen
-
+sed -i "/^#Color/ cColor" /mnt/etc/pacman.conf
+sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/pacman.conf
 mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
 awk -v RS="\0" -v ORS="" '{gsub(/#\[multilib\]\n#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
 arch-chroot /mnt pacman --sync --refresh
+
+curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/pps3941/yay.tar.gz
+tar xvf /mnt/home/pps3941/yay.tar.gz -C /mnt/home/pps3941
+arch-chroot /mnt chown pps3941:pps3941 /home/pps3941/yay.tar.gz /home/pps3941/yay
+arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si"
+rm /mnt/home/pps3941/yay.tar.gz
+rm -rf /mnt/home/pps3941/yay
+
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xorg"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm lxqt oxygen-icons noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm sddm"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xdg-user-dirs"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm tlp"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm firefox flashplugin"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm chrony"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm reflector"
 
 cat > /mnt/etc/systemd/system/reflector.service <<EOF
 [Unit]
@@ -143,34 +163,9 @@ RequiredBy=multi-user.target
 EOF
 
 arch-chroot /mnt systemctl enable reflector.service
-
-curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/pps3941/yay.tar.gz
-tar xvf /mnt/home/pps3941/yay.tar.gz -C /mnt/home/pps3941
-arch-chroot /mnt chown pps3941:pps3941 /home/pps3941/yay.tar.gz /home/pps3941/yay
-arch-chroot /mnt su - pps3941 -c "cd yay && yes | makepkg -si"
-rm /mnt/home/pps3941/yay.tar.gz
-rm -rf /mnt/home/pps3941/yay
-
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xorg"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm lxqt oxygen-icons noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm sddm"
-
 arch-chroot /mnt systemctl enable sddm
-
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xdg-user-dirs"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm tlp"
-
 arch-chroot /mnt systemctl enable tlp
-
-sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
-arch-chroot /mnt mkinitcpio -P
-
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm firefox flashplugin"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm chrony"
-
 arch-chroot /mnt systemctl enable chronyd
 arch-chroot /mnt systemctl enable fstrim.timer
 
-# TODO: A bunch of stuff in the Laptops article.
+# TODO: A bunch of stuff in the Laptops article...?
