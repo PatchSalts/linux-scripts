@@ -109,6 +109,8 @@ When = PostTransaction
 Exec = /usr/bin/bootctl update
 EOF
 
+# Post-install.
+
 arch-chroot /mnt useradd --create-home --groups wheel patch
 echo -e "====PATCH PASSWORD====\a"
 arch-chroot /mnt passwd patch
