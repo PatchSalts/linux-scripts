@@ -120,8 +120,8 @@ rm -rf /mnt/home/pps3941/yay
 
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xorg"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm mesa lib32-mesa virtualbox-guest-utils xf86-video-vmware"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm lxqt oxygen-icons noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm sddm"
+#arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm lxqt oxygen-icons noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
+#arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm sddm"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xdg-user-dirs"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm firefox flashplugin"
@@ -142,8 +142,8 @@ RequiredBy=multi-user.target
 EOF
 
 arch-chroot /mnt systemctl enable reflector.service
-arch-chroot /mnt systemctl enable sddm
-arch-chroot /mnt systemctl enable tlp
+#arch-chroot /mnt systemctl enable sddm
+#arch-chroot /mnt systemctl enable tlp
 arch-chroot /mnt systemctl enable fstrim.timer
 arch-chroot /mnt systemctl enable vboxservice
 
