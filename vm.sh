@@ -11,7 +11,7 @@ timedatectl set-ntp true
 # /dev/sda1	/boot	260MB	FAT32
 # /dev/sda2	/	MAX	ext4
 
-fdisk /dev/nvme0n1 --wipe always <<EOF
+fdisk /dev/sda --wipe always <<EOF
 g
 n
 1
