@@ -8,11 +8,10 @@ loadkeys us
 timedatectl set-ntp true
 
 # Partition scheme:
-# /dev/nvme0n1p1	/boot	260MB	FAT32
-# /dev/nvme0n1p2	/	35GB	ext4
-# /dev/nvme0n1p3	/home	MAX	ext4
+# /dev/sda1	/boot	260MB	FAT32
+# /dev/sda2	/	MAX	ext4
 
-fdisk /dev/nvme0n1 --wipe always <<EOF
+fdisk /dev/sda --wipe always <<EOF
 g
 n
 1
@@ -20,42 +19,28 @@ n
 +260M
 t
 1
-1
 n
 2
 
-+35G
+
 t
 2
 24
-n
-3
-
-
-t
-3
-28
 w
 EOF
 
-yes | mkfs.fat -F 32 /dev/nvme0n1p1
-yes | mkfs.ext4 /dev/nvme0n1p2
-yes | mkfs.ext4 /dev/nvme0n1p3
+yes | mkfs.fat -F 32 /dev/sda1
+yes | mkfs.ext4 /dev/sda2
 
-mount /dev/nvme0n1p2 /mnt
-mkdir /mnt/boot /mnt/home
-mount /dev/nvme0n1p1 /mnt/boot
-mount /dev/nvme0n1p3 /mnt/home
-fallocate -l 15G /mnt/swapfile
-chmod 600 /mnt/swapfile
-mkswap /mnt/swapfile
-swapon /mnt/swapfile
+mount /dev/sda2 /mnt
+mkdir /mnt/boot
+mount /dev/sda1 /mnt/boot
 
 pacman -Sy
 pacman --sync --noconfirm reflector
 reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
-pacstrap /mnt base base-devel linux linux-firmware exfat-utils connman wpa_supplicant cmst nano man-db man-pages texinfo amd-ucode
+pacstrap /mnt base base-devel linux linux-firmware connman wpa_supplicant nano man-db man-pages texinfo
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -68,12 +53,12 @@ arch-chroot /mnt locale-gen
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 echo "KEYMAP=us" > /mnt/etc/vconsole.conf
 
-echo "pps3941-laptop" > /mnt/etc/hostname
+echo "pps3941-test" > /mnt/etc/hostname
 
 cat >> /mnt/etc/hosts <<EOF
 127.0.0.1	localhost
 ::1		localhost
-127.0.1.1	pps3941-laptop.localdomain	pps3941-laptop
+127.0.1.1	pps3941-test.localdomain	pps3941-test
 EOF
 
 arch-chroot /mnt systemctl enable connman
@@ -91,9 +76,8 @@ EOF
 cat > /mnt/boot/loader/entries/arch.conf <<EOF
 title	Arch Linux
 linux	/vmlinuz-linux
-initrd	/amd-ucode.img
 initrd	/initramfs-linux.img
-options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
+options	root=UUID=`findmnt -rno UUID /mnt/` rw
 EOF
 
 mkdir /mnt/etc/pacman.d/hooks
@@ -110,9 +94,6 @@ Exec = /usr/bin/bootctl update
 EOF
 
 # Post-install.
-
-sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
-arch-chroot /mnt mkinitcpio -P
 
 arch-chroot /mnt useradd --create-home --groups wheel patch
 echo -e "====PATCH PASSWORD====\a"
@@ -138,14 +119,12 @@ rm /mnt/home/pps3941/yay.tar.gz
 rm -rf /mnt/home/pps3941/yay
 
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xorg"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm lxqt oxygen-icons noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm sddm"
+arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm mesa lib32-mesa virtualbox-guest-utils xf86-video-vmware"
+#arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm lxqt oxygen-icons noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
+#arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm sddm"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm xdg-user-dirs"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm tlp"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm firefox flashplugin"
-arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm chrony"
 arch-chroot /mnt su - pps3941 -c "yay --sync --noconfirm reflector"
 
 cat > /mnt/etc/systemd/system/reflector.service <<EOF
@@ -163,9 +142,9 @@ RequiredBy=multi-user.target
 EOF
 
 arch-chroot /mnt systemctl enable reflector.service
-arch-chroot /mnt systemctl enable sddm
-arch-chroot /mnt systemctl enable tlp
-arch-chroot /mnt systemctl enable chronyd
+#arch-chroot /mnt systemctl enable sddm
+#arch-chroot /mnt systemctl enable tlp
 arch-chroot /mnt systemctl enable fstrim.timer
+arch-chroot /mnt systemctl enable vboxservice
 
 # TODO: A bunch of stuff in the Laptops article...?
