@@ -3,7 +3,12 @@
 
 loadkeys us
 
-# TODO: Verify boot mode later with error checking.
+if [ -f "/sys/firmware/efi/efivars" ]; then
+	echo "Booted into UEFI mode."
+else
+	echo "Booted into BIOS mode. Exiting..."
+	exit 1
+fi
 
 timedatectl set-ntp true
 
