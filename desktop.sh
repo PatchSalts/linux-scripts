@@ -1,8 +1,11 @@
 #!/bin/bash
 # Arch install script for my desktop (AMD)
 
+# 1 - Pre-installation
+# 1.3 - Set the keyboard layout
 loadkeys us
 
+# 1.4 - Verify the boot mode
 if [ -f "/sys/firmware/efi/efivars" ]; then
 	echo "Booted into UEFI mode."
 else
@@ -10,8 +13,10 @@ else
 	exit 1
 fi
 
+# 1.6 - Update the system clock
 timedatectl set-ntp true
 
+# 1.7 - Partition the disks
 # Partition scheme:
 # /dev/sda1	/boot	260MB	FAT32
 # /dev/sda2	/	MAX	ext4
@@ -48,10 +53,12 @@ t
 w
 EOF
 
+# 1.8 - Format the partitions
 yes | mkfs.fat -F 32 /dev/sda1
 yes | mkfs.ext4 /dev/sda2
 yes | mkfs.ext4 /dev/sdb1
 
+# Mount the file systems
 mount /dev/sda2 /mnt
 mkdir /mnt/boot /mnt/home
 mount /dev/sda1 /mnt/boot
@@ -61,32 +68,42 @@ chmod 600 /mnt/swapfile
 mkswap /mnt/swapfile
 swapon /mnt/swapfile
 
+# 2 - Installation
+# 2.1 - Select the mirrors
 pacman -Sy
 pacman --sync --noconfirm reflector
 reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
-pacstrap /mnt base base-devel linux linux-firmware exfat-utils connman wpa_supplicant cmst nano man-db man-pages texinfo amd-ucode
+# 2.2 - Install essential packages
+pacstrap /mnt base base-devel linux linux-firmware exfat-utils networkmanager network-manger-applet nano man-db man-pages texinfo amd-ucode
 
+# 3 - Configure the system
+# 3.1 - Fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
+# 3.3 - Time zone
 arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
 arch-chroot /mnt hwclock --systohc
 
+# 3.4 - Localization
 sed -i "/^#en_US.UTF-8 UTF-8/ cen_US.UTF-8 UTF-8" /mnt/etc/locale.gen
 sed -i "/^#ja_JP.UTF-8 UTF-8/ cja_JP.UTF-8 UTF-8" /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 echo "KEYMAP=us" > /mnt/etc/vconsole.conf
 
-echo "pps3941-laptop" > /mnt/etc/hostname
+# 3.5 - Network configuration
+hostname="pps3941-desktop"
+echo $hostname > /mnt/etc/hostname
 
 cat >> /mnt/etc/hosts <<EOF
 127.0.0.1	localhost
 ::1		localhost
-127.0.1.1	pps3941-desktop.localdomain	pps3941-desktop
+127.0.1.1	$hostname.localdomain	$hostname
 EOF
 
-arch-chroot /mnt systemctl enable connman
+#arch-chroot /mnt systemctl disable .service
+arch-chroot /mnt systemctl enable NetworkManager.service
 
 echo -e "====ROOT PASSWORD====\a"
 arch-chroot /mnt passwd
