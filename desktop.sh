@@ -1,6 +1,8 @@
 #!/bin/bash
 # Arch install script for my desktop (AMD)
 
+# Installation guide
+
 # 1 - Pre-installation
 # 1.3 - Set the keyboard layout
 loadkeys us
@@ -105,9 +107,11 @@ EOF
 #arch-chroot /mnt systemctl disable .service
 arch-chroot /mnt systemctl enable NetworkManager.service
 
+# 3.7 - Root password
 echo -e "====ROOT PASSWORD====\a"
 arch-chroot /mnt passwd
 
+# 3.8 - Boot loader
 arch-chroot /mnt bootctl install
 cat > /mnt/boot/loader/loader.conf <<EOF
 default	arch.conf
@@ -123,6 +127,25 @@ initrd	/initramfs-linux.img
 options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
 EOF
 
+# General recommendations
+
+# 1 - System administration
+# 1.1 - Users and groups
+arch-chroot /mnt useradd --create-home --groups wheel patch
+echo -e "====PATCH PASSWORD====\a"
+arch-chroot /mnt passwd patch
+arch-chroot /mnt useradd --create-home --groups wheel pps3941
+echo -e "====PPS3941 PASSWORD====\a"
+arch-chroot /mnt passwd pps3941
+
+# 1.2 - Privilege escalation
+# TODO: Turn passwords back on.
+sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
+
+# 2 - Package management
+# 2.1 - pacman
+################################################################################
+
 mkdir /mnt/etc/pacman.d/hooks
 cat > /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
 [Trigger]
@@ -136,20 +159,8 @@ When = PostTransaction
 Exec = /usr/bin/bootctl update
 EOF
 
-# Post-install.
-
 sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -P
-
-arch-chroot /mnt useradd --create-home --groups wheel patch
-echo -e "====PATCH PASSWORD====\a"
-arch-chroot /mnt passwd patch
-arch-chroot /mnt useradd --create-home --groups wheel pps3941
-echo -e "====PPS3941 PASSWORD====\a"
-arch-chroot /mnt passwd pps3941
-
-# TODO: Turn passwords back on.
-sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
 
 sed -i "/^#Color/ cColor" /mnt/etc/pacman.conf
 sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/pacman.conf
