@@ -113,6 +113,7 @@ arch-chroot /mnt passwd
 
 # 3.8 - Boot loader
 arch-chroot /mnt bootctl install
+
 cat > /mnt/boot/loader/loader.conf <<EOF
 default	arch.conf
 timeout	1
@@ -127,25 +128,6 @@ initrd	/initramfs-linux.img
 options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
 EOF
 
-# General recommendations
-
-# 1 - System administration
-# 1.1 - Users and groups
-arch-chroot /mnt useradd --create-home --groups wheel patch
-echo -e "====PATCH PASSWORD====\a"
-arch-chroot /mnt passwd patch
-arch-chroot /mnt useradd --create-home --groups wheel pps3941
-echo -e "====PPS3941 PASSWORD====\a"
-arch-chroot /mnt passwd pps3941
-
-# 1.2 - Privilege escalation
-# TODO: Turn passwords back on.
-sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
-
-# 2 - Package management
-# 2.1 - pacman
-################################################################################
-
 mkdir /mnt/etc/pacman.d/hooks
 cat > /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
 [Trigger]
@@ -159,30 +141,34 @@ When = PostTransaction
 Exec = /usr/bin/bootctl update
 EOF
 
-sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
-arch-chroot /mnt mkinitcpio -P
+# General recommendations
 
+# 1 - System administration
+# 1.1 - Users and groups
+arch-chroot /mnt useradd --create-home --groups wheel patch
+echo -e "====PATCH PASSWORD====\a"
+arch-chroot /mnt passwd patch
+arch-chroot /mnt useradd --create-home --groups wheel pps3941
+echo -e "====PPS3941 PASSWORD====\a"
+arch-chroot /mnt passwd pps3941
+default_user="patch"
+
+# 1.2 - Privilege escalation
+# TODO: Turn passwords back on.
+sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
+
+# 2 - Package management
+# 2.1 - pacman
 sed -i "/^#Color/ cColor" /mnt/etc/pacman.conf
 sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/pacman.conf
+
+# 2.2 - Repositories
 mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
 awk -v RS="\0" -v ORS="" '{gsub(/#\[multilib\]\n#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
 arch-chroot /mnt pacman --sync --refresh
 
-curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/patch/yay.tar.gz
-tar xvf /mnt/home/patch/yay.tar.gz -C /mnt/home/patch
-arch-chroot /mnt chown patch:patch /home/patch/yay.tar.gz /home/patch/yay
-arch-chroot /mnt su - patch -c "cd yay && yes | makepkg -si"
-rm /mnt/home/patch/yay.tar.gz
-rm -rf /mnt/home/patch/yay
-
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm xorg"
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm lightdm lightdm-gtk-greeter openbox obconf obkey tint2 rofi terminator tmux pcmanfm notepadqq gimp gimp-plugin-gmic inkscape bomiaudacity puddletag exfalso qpdfview libreoffice calibre firefox flashplugin qbittorrent"
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm xdg-user-dirs"
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth"
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm firefox flashplugin"
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm chrony"
-arch-chroot /mnt su - patch -c "yay --sync --noconfirm reflector"
+# 2.3 - Mirrors
+arch-chroot /mnt su - $default_user -c "pacman --sync --noconfirm reflector"
 
 cat > /mnt/etc/systemd/system/reflector.service <<EOF
 [Unit]
@@ -199,9 +185,54 @@ RequiredBy=multi-user.target
 EOF
 
 arch-chroot /mnt systemctl enable reflector.service
-arch-chroot /mnt systemctl enable sddm
-#arch-chroot /mnt systemctl enable tlp
-arch-chroot /mnt systemctl enable chronyd
-arch-chroot /mnt systemctl enable fstrim.timer
 
-# TODO: A bunch of stuff in the Laptops article.
+# 2.5 - Arch User Repository
+curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/$default_user/yay.tar.gz
+tar xvf /mnt/home/$default_user/yay.tar.gz -C /mnt/home/$default_user
+arch-chroot /mnt chown $default_user:$default_user /home/$default_user/yay.tar.gz /home/$default_user/yay
+arch-chroot /mnt su - $default_user -c "cd yay && yes | makepkg -si"
+rm /mnt/home/$default_user/yay.tar.gz
+rm -rf /mnt/home/$default_user/yay
+
+# 4 - Graphical user interface
+# 4.1 - Display server
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm xorg"
+
+# 4.2 - Display drivers
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
+
+# 4.4 - Window managers
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm openbox obconf obkey tint2"
+
+# 4.5 - Display manager
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm lightdm lightdm-gtk-greeter"
+arch-chroot /mnt systemctl enable lightdm
+
+# 4.6 - User directories
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm xdg-user-dirs"
+arch-chroot /mnt xdg-user-dirs-update
+
+# 5 - Power management
+
+# 6 - Multimedia
+
+# 7 - Networking
+
+# 8 - Input devices
+
+# 9 - Optimization
+
+# 10 - System service
+
+# 11 - Appearance
+
+# 12 - Console improvements
+
+################################################################################
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm"
+
+sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
+arch-chroot /mnt mkinitcpio -P
+
+#arch-chroot /mnt systemctl enable tlp
+arch-chroot /mnt systemctl enable fstrim.timer
