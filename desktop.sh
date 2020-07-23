@@ -1,6 +1,18 @@
 #!/bin/bash
 # Arch install script for my desktop (AMD)
 
+errorlog="Errors: "
+
+function fail {
+	if [ $1 -eq 1 ]; then
+		echo "Critical failure: $2. goodbye."
+		exit $1
+	else
+		echo "Non-critical failure, continuing..."
+		errorlog="$errorlog; $2"
+	fi
+}
+
 # Installation guide
 
 # 1 - Pre-installation
@@ -8,11 +20,9 @@
 loadkeys us
 
 # 1.4 - Verify the boot mode
-if [ -f "/sys/firmware/efi/efivars" ]; then
-	echo "Booted into UEFI mode."
-else
-	echo "Booted into BIOS mode. Exiting..."
-	exit 1
+if [ ! -f "/sys/firmware/efi/efivars" ]; then
+	fail 1 "booted into BIOS mode"
+
 fi
 
 # 1.6 - Update the system clock
