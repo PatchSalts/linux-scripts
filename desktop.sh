@@ -1,15 +1,17 @@
 #!/bin/bash
 # Arch install script for my desktop (AMD)
 
-errorlog="Errors: "
-
 function fail {
 	if [ $1 -eq 1 ]; then
-		echo "Critical failure: $2. goodbye."
+		echo "Critical failure: $2 on line $3. Goodbye."
 		exit $1
 	else
-		echo "Non-critical failure, continuing..."
-		errorlog="$errorlog; $2"
+		echo "Non-critical failure: $2 on line $3. Continuing..."
+		if [ -z "$errorlog" ]; then
+			errorlog="$2 on line $3"
+		else
+			errorlog="$errorlog; $2 on line $3"
+		fi
 	fi
 }
 
@@ -17,16 +19,15 @@ function fail {
 
 # 1 - Pre-installation
 # 1.3 - Set the keyboard layout
-loadkeys us
+loadkeys us || fail 2 "failed to change the keyboard layout" $LINENO
 
 # 1.4 - Verify the boot mode
 if [ ! -f "/sys/firmware/efi/efivars" ]; then
-	fail 1 "booted into BIOS mode"
-
+	fail 1 "booted into BIOS mode" $LINENO
 fi
 
 # 1.6 - Update the system clock
-timedatectl set-ntp true
+timedatectl set-ntp true || fail 2 "failed to update system clock" $LINENO
 
 # 1.7 - Partition the disks
 # Partition scheme:
@@ -34,7 +35,7 @@ timedatectl set-ntp true
 # /dev/sda2	/	MAX	ext4
 # /dev/sdb1	/home	MAX	ext4
 
-fdisk /dev/sda --wipe always <<EOF
+fdisk /dev/sda --wipe always <<EOF || fail 1 "failed to partition sda" $LINENO
 g
 n
 1
@@ -53,7 +54,7 @@ t
 w
 EOF
 
-fdisk /dev/sdb --wipe always <<EOF
+fdisk /dev/sdb --wipe always <<EOF || fail 1 "failed to partition sdb" $LINENO
 g
 n
 1
@@ -66,9 +67,9 @@ w
 EOF
 
 # 1.8 - Format the partitions
-yes | mkfs.fat -F 32 /dev/sda1
-yes | mkfs.ext4 /dev/sda2
-yes | mkfs.ext4 /dev/sdb1
+yes | mkfs.fat -F 32 /dev/sda1 || fail 1 "failed to format sda1" $LINENO
+yes | mkfs.ext4 /dev/sda2 || fail 1 "failed to format sda2" $LINENO
+yes | mkfs.ext4 /dev/sdb1 || fail 1 "failed to format sdb1" $LINENO
 
 # Mount the file systems
 mount /dev/sda2 /mnt
@@ -223,6 +224,7 @@ arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm xdg-user-dirs"
 arch-chroot /mnt xdg-user-dirs-update
 
 # 5 - Power management
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm powerkit"
 
 # 6 - Multimedia
 
