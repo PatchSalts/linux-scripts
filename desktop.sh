@@ -22,7 +22,7 @@ function fail {
 loadkeys us || fail 2 "failed to change the keyboard layout" $LINENO
 
 # 1.4 - Verify the boot mode
-if [ ! -f "/sys/firmware/efi/efivars" ]; then
+if [ ! -d "/sys/firmware/efi/efivars" ]; then
 	fail 1 "booted into BIOS mode" $LINENO
 fi
 
@@ -35,19 +35,19 @@ timedatectl set-ntp true || fail 2 "failed to update system clock" $LINENO
 # /dev/sda2	/	MAX	ext4
 # /dev/sdb1	/home	MAX	ext4
 
-fdisk /dev/sda --wipe always <<EOF || fail 1 "failed to partition sda" $LINENO
+fdisk /dev/sda --wipe-partitions always <<EOF || fail 1 "failed to partition sda" $LINENO
 g
 n
 1
 
 +260M
-t
-1
-1
 n
 2
 
 
+t
+1
+1
 t
 2
 24
@@ -88,7 +88,7 @@ pacman --sync --noconfirm reflector
 reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
 
 # 2.2 - Install essential packages
-pacstrap /mnt base base-devel linux linux-firmware exfat-utils networkmanager network-manger-applet nano man-db man-pages texinfo amd-ucode
+pacstrap /mnt base base-devel linux linux-firmware exfat-utils networkmanager network-manager-applet nano man-db man-pages texinfo amd-ucode
 
 # 3 - Configure the system
 # 3.1 - Fstab
