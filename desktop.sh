@@ -227,6 +227,7 @@ arch-chroot /mnt xdg-user-dirs-update
 arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm powerkit"
 
 # 6 - Multimedia
+arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth pasystray"
 
 # 7 - Networking
 
