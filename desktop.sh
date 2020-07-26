@@ -3,6 +3,7 @@
 
 function fail {
 	if [ $1 -eq 1 ]; then
+		noncrit
 		echo "Critical failure: $2 on line $3. Goodbye."
 		exit $1
 	else
@@ -10,8 +11,16 @@ function fail {
 		if [ -z "$errorlog" ]; then
 			errorlog="$2 on line $3"
 		else
-			errorlog="$errorlog; $2 on line $3"
+			errorlog="$errorlog;\n$2 on line $3"
 		fi
+	fi
+}
+
+function noncrit {
+	if [ -z "$errorlog" ]; then
+		print "No non-critical failures."
+	else
+		print "Non-critical failures:\n$errorlog."
 	fi
 }
 
@@ -35,7 +44,7 @@ timedatectl set-ntp true || fail 2 "failed to update system clock" $LINENO
 # /dev/sda2	/	MAX	ext4
 # /dev/sdb1	/home	MAX	ext4
 
-fdisk /dev/sda --wipe-partitions always <<EOF || fail 1 "failed to partition sda" $LINENO
+fdisk /dev/sda -W always <<EOF || fail 1 "failed to partition sda" $LINENO
 g
 n
 1
@@ -54,7 +63,7 @@ t
 w
 EOF
 
-fdisk /dev/sdb --wipe always <<EOF || fail 1 "failed to partition sdb" $LINENO
+fdisk /dev/sdb -W always <<EOF || fail 1 "failed to partition sdb" $LINENO
 g
 n
 1
@@ -84,8 +93,8 @@ swapon /mnt/swapfile
 # 2 - Installation
 # 2.1 - Select the mirrors
 pacman -Sy
-pacman --sync --noconfirm reflector
-reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
+pacman -S --noconfirm reflector
+reflector -c "United States" -p https -f 5 --save /etc/pacman.d/mirrorlist
 
 # 2.2 - Install essential packages
 pacstrap /mnt base base-devel linux linux-firmware exfat-utils networkmanager network-manager-applet nano man-db man-pages texinfo amd-ucode
@@ -115,8 +124,7 @@ cat >> /mnt/etc/hosts <<EOF
 127.0.1.1	$hostname.localdomain	$hostname
 EOF
 
-#arch-chroot /mnt systemctl disable .service
-arch-chroot /mnt systemctl enable NetworkManager.service
+arch-chroot /mnt systemctl enable NetworkManager
 
 # 3.7 - Root password
 echo -e "====ROOT PASSWORD====\a"
@@ -156,10 +164,10 @@ EOF
 
 # 1 - System administration
 # 1.1 - Users and groups
-arch-chroot /mnt useradd --create-home --groups wheel patch
+arch-chroot /mnt useradd -m -G wheel patch
 echo -e "====PATCH PASSWORD====\a"
 arch-chroot /mnt passwd patch
-arch-chroot /mnt useradd --create-home --groups wheel pps3941
+arch-chroot /mnt useradd -m -G wheel pps3941
 echo -e "====PPS3941 PASSWORD====\a"
 arch-chroot /mnt passwd pps3941
 default_user="patch"
@@ -176,10 +184,10 @@ sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/pacman.conf
 # 2.2 - Repositories
 mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
 awk -v RS="\0" -v ORS="" '{gsub(/#\[multilib\]\n#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
-arch-chroot /mnt pacman --sync --refresh
+arch-chroot /mnt pacman -Sy
 
 # 2.3 - Mirrors
-arch-chroot /mnt su - $default_user -c "pacman --sync --noconfirm reflector"
+arch-chroot /mnt su - $default_user -c "pacman -S --noconfirm reflector"
 
 cat > /mnt/etc/systemd/system/reflector.service <<EOF
 [Unit]
@@ -189,7 +197,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/reflector --country "United States" --protocol https --fastest 5 --save /etc/pacman.d/mirrorlist
+ExecStart=/usr/bin/reflector -c "United States" -p https -f 5 --save /etc/pacman.d/mirrorlist
 
 [Install]
 RequiredBy=multi-user.target
@@ -207,33 +215,50 @@ rm -rf /mnt/home/$default_user/yay
 
 # 4 - Graphical user interface
 # 4.1 - Display server
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm xorg"
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm xorg"
 
 # 4.2 - Display drivers
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
 
 # 4.4 - Window managers
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm openbox obconf obkey tint2"
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm openbox obconf obkey tint2 xbindkeys"
 
 # 4.5 - Display manager
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm lightdm lightdm-gtk-greeter"
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm lightdm lightdm-gtk-greeter"
 arch-chroot /mnt systemctl enable lightdm
 
 # 4.6 - User directories
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm xdg-user-dirs"
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm xdg-user-dirs"
 arch-chroot /mnt xdg-user-dirs-update
 
 # 5 - Power management
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm powerkit"
+# 5.1 - ACPI events
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm powerkit"
+
+# 5.2 - CPU frequency scaling
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm tlp"
+arch-chroot /mnt systemctl enable tlp
+
+# 5.3 - Laptops
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm brightnessctl"
+
+# 5.4 - Suspend and hibernate
+sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
+arch-chroot /mnt mkinitcpio -P
 
 # 6 - Multimedia
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth pasystray"
+# 6.1 - Sound
+arch-chroot /mnt su - $default_user -c "yay -S --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth pasystray pavucontrol"
 
 # 7 - Networking
+# 7.1 - Clock synchronization
+arch-chroot /mnt systemctl enable systemd-timesyncd
 
 # 8 - Input devices
 
 # 9 - Optimization
+# 9.3 - Solid state drives
+arch-chroot /mnt systemctl enable fstrim.timer
 
 # 10 - System service
 
@@ -241,11 +266,4 @@ arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm pulseaudio pulsea
 
 # 12 - Console improvements
 
-################################################################################
-arch-chroot /mnt su - $default_user -c "yay --sync --noconfirm"
-
-sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
-arch-chroot /mnt mkinitcpio -P
-
-#arch-chroot /mnt systemctl enable tlp
-arch-chroot /mnt systemctl enable fstrim.timer
+noncrit
