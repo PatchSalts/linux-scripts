@@ -124,7 +124,8 @@ cat >> /mnt/etc/hosts <<EOF
 127.0.1.1	$hostname.localdomain	$hostname
 EOF
 
-arch-chroot /mnt systemctl enable NetworkManager
+#arch-chroot /mnt systemctl disable systemd-networkd.service
+arch-chroot /mnt systemctl enable NetworkManager.service
 
 # 3.7 - Root password
 echo -e "====ROOT PASSWORD====\a"
@@ -225,7 +226,7 @@ arch-chroot /mnt su - $default_user -c "yay -S --noconfirm openbox obconf obkey 
 
 # 4.5 - Display manager
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm lightdm lightdm-gtk-greeter"
-arch-chroot /mnt systemctl enable lightdm
+arch-chroot /mnt systemctl enable lightdm.service
 
 # 4.6 - User directories
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm xdg-user-dirs"
@@ -237,7 +238,7 @@ arch-chroot /mnt su - $default_user -c "yay -S --noconfirm powerkit"
 
 # 5.2 - CPU frequency scaling
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm tlp"
-arch-chroot /mnt systemctl enable tlp
+arch-chroot /mnt systemctl enable tlp.service
 
 # 5.3 - Laptops
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm brightnessctl"
@@ -252,7 +253,7 @@ arch-chroot /mnt su - $default_user -c "yay -S --noconfirm pulseaudio pulseaudio
 
 # 7 - Networking
 # 7.1 - Clock synchronization
-arch-chroot /mnt systemctl enable systemd-timesyncd
+arch-chroot /mnt systemctl enable systemd-timesyncd.service
 
 # 8 - Input devices
 
