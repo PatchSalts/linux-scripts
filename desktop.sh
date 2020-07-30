@@ -244,6 +244,7 @@ arch-chroot /mnt systemctl enable tlp.service
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm brightnessctl"
 
 # 5.4 - Suspend and hibernate
+# TODO: Move all hibernate-related code in here. This'll be annoying...
 sed -i '/^HOOKS=/ s/udev/udev resume/' /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -P
 
