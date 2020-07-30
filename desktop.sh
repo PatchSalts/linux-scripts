@@ -124,7 +124,7 @@ cat >> /mnt/etc/hosts <<EOF
 127.0.1.1	$hostname.localdomain	$hostname
 EOF
 
-#arch-chroot /mnt systemctl disable systemd-networkd.service
+arch-chroot /mnt systemctl disable systemd-networkd.service
 arch-chroot /mnt systemctl enable NetworkManager.service
 
 # 3.7 - Root password
@@ -192,9 +192,9 @@ arch-chroot /mnt su - $default_user -c "pacman -S --noconfirm reflector"
 
 cat > /mnt/etc/systemd/system/reflector.service <<EOF
 [Unit]
-Description=Pacman mirrorlist update
+Description=pacman mirrorlist update
 Wants=network-online.target
-After=network-online.target
+After=network-online.target nss-lookup.target
 
 [Service]
 Type=oneshot
