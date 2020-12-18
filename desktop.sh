@@ -11,7 +11,7 @@ loadkeys us
 
 # 1.4 - Verify the boot mode
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
-	fail 1 "booted into BIOS mode" $LINENO
+	exit 1 "booted into BIOS mode" $LINENO
 fi
 
 # 1.6 - Update the system clock
