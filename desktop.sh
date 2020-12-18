@@ -1,34 +1,13 @@
 #!/bin/bash
 # Arch install script for my desktop (AMD)
 
-function fail {
-	if [ $1 -eq 1 ]; then
-		noncrit
-		echo "Critical failure: $2 on line $3. Goodbye."
-		exit $1
-	else
-		echo "Non-critical failure: $2 on line $3. Continuing..."
-		if [ -z "$errorlog" ]; then
-			errorlog="$2 on line $3"
-		else
-			errorlog="$errorlog;\n$2 on line $3"
-		fi
-	fi
-}
-
-function noncrit {
-	if [ -z "$errorlog" ]; then
-		print "No non-critical failures."
-	else
-		print "Non-critical failures:\n$errorlog."
-	fi
-}
+# TODO: Set up error handling. Just exit on any error, spit out a message.
 
 # Installation guide
 
 # 1 - Pre-installation
 # 1.3 - Set the keyboard layout
-loadkeys us || fail 2 "failed to change the keyboard layout" $LINENO
+loadkeys us
 
 # 1.4 - Verify the boot mode
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
@@ -36,7 +15,7 @@ if [ ! -d "/sys/firmware/efi/efivars" ]; then
 fi
 
 # 1.6 - Update the system clock
-timedatectl set-ntp true || fail 2 "failed to update system clock" $LINENO
+timedatectl set-ntp true
 
 # 1.7 - Partition the disks
 # Partition scheme:
@@ -44,7 +23,7 @@ timedatectl set-ntp true || fail 2 "failed to update system clock" $LINENO
 # /dev/sda2	/	MAX	ext4
 # /dev/sdb1	/home	MAX	ext4
 
-fdisk /dev/sda -W always <<EOF || fail 1 "failed to partition sda" $LINENO
+fdisk /dev/sda -W always <<EOF
 g
 n
 1
@@ -63,7 +42,7 @@ t
 w
 EOF
 
-fdisk /dev/sdb -W always <<EOF || fail 1 "failed to partition sdb" $LINENO
+fdisk /dev/sdb -W always <<EOF
 g
 n
 1
@@ -76,9 +55,9 @@ w
 EOF
 
 # 1.8 - Format the partitions
-yes | mkfs.fat -F 32 /dev/sda1 || fail 1 "failed to format sda1" $LINENO
-yes | mkfs.ext4 /dev/sda2 || fail 1 "failed to format sda2" $LINENO
-yes | mkfs.ext4 /dev/sdb1 || fail 1 "failed to format sdb1" $LINENO
+yes | mkfs.fat -F 32 /dev/sda1
+yes | mkfs.ext4 /dev/sda2
+yes | mkfs.ext4 /dev/sdb1
 
 # Mount the file systems
 mount /dev/sda2 /mnt
