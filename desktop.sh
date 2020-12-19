@@ -4,6 +4,10 @@
 set -e
 trap 'echo "An error has occurred on line $LINENO. Exiting script."' ERR
 
+reflectorparams='-c "United States" -p https -f 5 --sort rate --save /etc/pacman.d/mirrorlist'
+hostname="pps3941-desktop"
+default_user="patch"
+
 # Installation guide
 
 # 1 - Pre-installation
@@ -14,9 +18,7 @@ trap 'echo "An error has occurred on line $LINENO. Exiting script."' ERR
 loadkeys us
 
 # 1.6 - Verify the boot mode
-if [ ! -d "/sys/firmware/efi/efivars" ]; then
-	exit 1 "booted into BIOS mode" $LINENO
-fi
+ls /sys/firmware/efi/efivars
 
 # "1.7 - Connect to the internet" is skipped as it is assumed that you've already done it to get to this point.
 
@@ -77,9 +79,10 @@ swapon /mnt/swapfile
 
 # 2 - Installation
 # 2.1 - Select the mirrors
+# TODO: clean up reflector criterion/configuration, systemd services, timers, etc.
 pacman -Sy
 pacman -S --noconfirm reflector
-reflector -c "United States" -p https -f 5 --save /etc/pacman.d/mirrorlist
+reflector "$reflectorparams"
 
 # 2.2 - Install essential packages
 pacstrap /mnt base base-devel linux linux-firmware exfat-utils networkmanager network-manager-applet nano man-db man-pages texinfo amd-ucode
@@ -102,8 +105,7 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 echo "KEYMAP=us" > /mnt/etc/vconsole.conf
 
 # 3.5 - Network configuration
-hostname="pps3941-desktop"
-echo $hostname > /mnt/etc/hostname
+echo "$hostname" > /mnt/etc/hostname
 
 cat >> /mnt/etc/hosts <<EOF
 127.0.0.1	localhost
@@ -165,7 +167,6 @@ arch-chroot /mnt passwd patch
 arch-chroot /mnt useradd -m -G wheel pps3941
 echo -e "====PPS3941 PASSWORD====\a"
 arch-chroot /mnt passwd pps3941
-default_user="patch"
 
 # 1.2 - Privilege escalation
 # TODO: Turn passwords back on.
@@ -184,7 +185,7 @@ awk -v RS="\0" -v ORS="" '{gsub(/#\[multilib\]\n#Include/, "[multilib]\nInclude"
 arch-chroot /mnt pacman -Sy
 
 # 2.3 - Mirrors
-arch-chroot /mnt su - $default_user -c "pacman -S --noconfirm reflector"
+arch-chroot /mnt su - "$default_user" -c "pacman -S --noconfirm reflector"
 
 cat > /mnt/etc/systemd/system/reflector.service <<EOF
 [Unit]
@@ -194,7 +195,7 @@ After=network-online.target nss-lookup.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/reflector -c "United States" -p https -f 5 --save /etc/pacman.d/mirrorlist
+ExecStart=/usr/bin/reflector $reflectorparams
 
 [Install]
 RequiredBy=multi-user.target
@@ -205,45 +206,45 @@ arch-chroot /mnt systemctl enable reflector.service
 # "2.4 - Arch Build System" is skipped as it is merely educational.
 
 # 2.5 - Arch User Repository
-curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/$default_user/yay.tar.gz
-tar xvf /mnt/home/$default_user/yay.tar.gz -C /mnt/home/$default_user
-arch-chroot /mnt chown $default_user:$default_user /home/$default_user/yay.tar.gz /home/$default_user/yay
-arch-chroot /mnt su - $default_user -c "cd yay && yes | makepkg -si"
-rm /mnt/home/$default_user/yay.tar.gz
-rm -rf /mnt/home/$default_user/yay
+curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/"$default_user"/yay.tar.gz
+tar xvf /mnt/home/"$default_user"/yay.tar.gz -C /mnt/home/"$default_user"
+arch-chroot /mnt chown "$default_user":"$default_user" /home/"$default_user"/yay.tar.gz /home/"$default_user"/yay
+arch-chroot /mnt su - "$default_user" -c "cd yay && yes | makepkg -si"
+rm /mnt/home/"$default_user"/yay.tar.gz
+rm -rf /mnt/home/"$default_user"/yay
 
 # "3 - Booting" and all its subsections are skipped as they are already implemented or irrelevant.
 
 # 4 - Graphical user interface
 # 4.1 - Display server
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm xorg"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm xorg"
 
 # 4.2 - Display drivers
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
 
 # "4.3 - Desktop environments" is skipped as it is irrelevant.
 
 # 4.4 - Window managers
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm openbox obconf obkey tint2 xbindkeys"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm openbox obconf obkey tint2 xbindkeys"
 
 # 4.5 - Display manager
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm lightdm lightdm-gtk-greeter"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm lightdm lightdm-gtk-greeter"
 arch-chroot /mnt systemctl enable lightdm.service
 
 # 4.6 - User directories
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm xdg-user-dirs"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm xdg-user-dirs"
 arch-chroot /mnt xdg-user-dirs-update
 
 # 5 - Power management
 # 5.1 - ACPI events
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm powerkit"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm powerkit"
 
 # 5.2 - CPU frequency scaling
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm tlp"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm tlp"
 arch-chroot /mnt systemctl enable tlp.service
 
 # 5.3 - Laptops
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm brightnessctl"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm brightnessctl"
 
 # 5.4 - Suspend and hibernate
 # TODO: Move all hibernate-related code in here. This'll be annoying...
@@ -252,7 +253,7 @@ arch-chroot /mnt mkinitcpio -P
 
 # 6 - Multimedia
 # 6.1 - Sound
-arch-chroot /mnt su - $default_user -c "yay -S --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth pasystray pavucontrol"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm pulseaudio pulseaudio-alsa pulseaudio-bluetooth pasystray pavucontrol"
 
 # 7 - Networking
 # 7.1 - Clock synchronization
