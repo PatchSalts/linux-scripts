@@ -6,18 +6,23 @@
 # Installation guide
 
 # 1 - Pre-installation
-# 1.3 - Set the keyboard layout
+# "1.1 - Acquire an installation image" through "1.4 - Boot the live environment" are skipped.
+# It is assumed that you've already done them to get to this point.
+
+# 1.5 - Set the keyboard layout
 loadkeys us
 
-# 1.4 - Verify the boot mode
+# 1.6 - Verify the boot mode
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
 	exit 1 "booted into BIOS mode" $LINENO
 fi
 
-# 1.6 - Update the system clock
+
+
+# 1.8 - Update the system clock
 timedatectl set-ntp true
 
-# 1.7 - Partition the disks
+# 1.9 - Partition the disks
 # Partition scheme:
 # /dev/sda1	/boot	260MB	FAT32
 # /dev/sda2	/	MAX	ext4
@@ -54,12 +59,12 @@ t
 w
 EOF
 
-# 1.8 - Format the partitions
+# 1.10 - Format the partitions
 yes | mkfs.fat -F 32 /dev/sda1
 yes | mkfs.ext4 /dev/sda2
 yes | mkfs.ext4 /dev/sdb1
 
-# Mount the file systems
+# 1.11 - Mount the file systems
 mount /dev/sda2 /mnt
 mkdir /mnt/boot /mnt/home
 mount /dev/sda1 /mnt/boot
@@ -81,6 +86,8 @@ pacstrap /mnt base base-devel linux linux-firmware exfat-utils networkmanager ne
 # 3 - Configure the system
 # 3.1 - Fstab
 genfstab -U /mnt >> /mnt/etc/fstab
+
+# "3.2 - Chroot" is skipped as it is incorporated in every command necessary.
 
 # 3.3 - Time zone
 arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
@@ -105,6 +112,8 @@ EOF
 
 arch-chroot /mnt systemctl disable systemd-networkd.service
 arch-chroot /mnt systemctl enable NetworkManager.service
+
+# "3.6 - Initramfs" is skipped as it is not necessary at this point in time.
 
 # 3.7 - Root password
 echo -e "====ROOT PASSWORD====\a"
@@ -140,6 +149,11 @@ When = PostTransaction
 Exec = /usr/bin/bootctl update
 EOF
 
+# "4 - Reboot" is skipped for obvious reasons.
+# "5 - Post-installation" is the next section of the script.
+
+### END OF PAGE ###
+
 # General recommendations
 
 # 1 - System administration
@@ -155,6 +169,8 @@ default_user="patch"
 # 1.2 - Privilege escalation
 # TODO: Turn passwords back on.
 sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
+
+# "1.3 - Service management" and "1.4 - System maintenance" are skipped as they are merely educational.
 
 # 2 - Package management
 # 2.1 - pacman
@@ -185,6 +201,8 @@ EOF
 
 arch-chroot /mnt systemctl enable reflector.service
 
+# "2.4 - Arch Build System" is skipped as it is merely educational.
+
 # 2.5 - Arch User Repository
 curl https://aur.archlinux.org/cgit/aur.git/snapshot/yay.tar.gz -o /mnt/home/$default_user/yay.tar.gz
 tar xvf /mnt/home/$default_user/yay.tar.gz -C /mnt/home/$default_user
@@ -193,12 +211,16 @@ arch-chroot /mnt su - $default_user -c "cd yay && yes | makepkg -si"
 rm /mnt/home/$default_user/yay.tar.gz
 rm -rf /mnt/home/$default_user/yay
 
+# "3 - Booting" and all its subsections are skipped as they are already implemented or irrelevant.
+
 # 4 - Graphical user interface
 # 4.1 - Display server
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm xorg"
 
 # 4.2 - Display drivers
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau"
+
+# "4.3 - Desktop environments" is skipped as it is irrelevant.
 
 # 4.4 - Window managers
 arch-chroot /mnt su - $default_user -c "yay -S --noconfirm openbox obconf obkey tint2 xbindkeys"
@@ -235,16 +257,9 @@ arch-chroot /mnt su - $default_user -c "yay -S --noconfirm pulseaudio pulseaudio
 # 7.1 - Clock synchronization
 arch-chroot /mnt systemctl enable systemd-timesyncd.service
 
-# 8 - Input devices
+# TODO - The rest of the document.
 
 # 9 - Optimization
 # 9.3 - Solid state drives
 arch-chroot /mnt systemctl enable fstrim.timer
 
-# 10 - System service
-
-# 11 - Appearance
-
-# 12 - Console improvements
-
-noncrit
