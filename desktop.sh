@@ -4,6 +4,11 @@
 set -e
 trap 'echo "An error has occurred on line $LINENO. Exiting script."' ERR
 
+# These variables aren't actually here for customization, they're for eliminating "magic numbers" and the like.
+# I simply think here is the best place to put them in case I shuffle around any sections; visibility and such.
+# You should read the entire script if you're looking to customize them.
+# Well, at least read the parts you are interested in changing.
+# This is for personal use by me, so I'm not going to waste my whole life making a perfectly flexible script.
 reflectorparams='-c "United States" -p https -f 5 --sort rate --save /etc/pacman.d/mirrorlist'
 hostname="pps3941-desktop"
 default_user="patch"
@@ -72,6 +77,10 @@ mount /dev/sda2 /mnt
 mkdir /mnt/boot /mnt/home
 mount /dev/sda1 /mnt/boot
 mount /dev/sdb1 /mnt/home
+
+# Swapfile stuff?
+# TODO: Examine if this needs to go in the block where I set up resume/hibernate.
+
 fallocate -l 20G /mnt/swapfile
 chmod 600 /mnt/swapfile
 mkswap /mnt/swapfile
@@ -85,7 +94,7 @@ pacman -S --noconfirm reflector
 reflector "$reflectorparams"
 
 # 2.2 - Install essential packages
-pacstrap /mnt base base-devel linux linux-firmware exfat-utils networkmanager network-manager-applet nano man-db man-pages texinfo amd-ucode
+pacstrap /mnt base base-devel linux linux-firmware networkmanager network-manager-applet nano man-db man-pages texinfo amd-ucode
 
 # 3 - Configure the system
 # 3.1 - Fstab
@@ -131,6 +140,10 @@ timeout	1
 editor	no
 EOF
 
+# Please note that I have preemptively added resume stuff because holy hell would that be annoying to edit later.
+# Sidenote,
+# TODO: Fix that so that resume/hibernate is handled in its own block, correctly.
+
 cat > /mnt/boot/loader/entries/arch.conf <<EOF
 title	Arch Linux
 linux	/vmlinuz-linux
@@ -169,7 +182,7 @@ echo -e "====PPS3941 PASSWORD====\a"
 arch-chroot /mnt passwd pps3941
 
 # 1.2 - Privilege escalation
-# TODO: Turn passwords back on.
+# TODO: Turn passwords back on later, after everything is done being installed.
 sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
 
 # "1.3 - Service management" and "1.4 - System maintenance" are skipped as they are merely educational.
@@ -182,9 +195,11 @@ sed -i "/^#TotalDownload/ cTotalDownload" /mnt/etc/pacman.conf
 # 2.2 - Repositories
 mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
 awk -v RS="\0" -v ORS="" '{gsub(/#\[multilib\]\n#Include/, "[multilib]\nInclude")}7' /mnt/etc/pacman.conf.bak > /mnt/etc/pacman.conf
+rm /mnt/etc/pacman.conf.bak
 arch-chroot /mnt pacman -Sy
 
 # 2.3 - Mirrors
+# TODO: clean up reflector criterion/configuration, systemd services, timers, etc.
 arch-chroot /mnt su - "$default_user" -c "pacman -S --noconfirm reflector"
 
 cat > /mnt/etc/systemd/system/reflector.service <<EOF
