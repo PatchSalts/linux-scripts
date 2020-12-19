@@ -1,7 +1,8 @@
 #!/bin/bash
 # Arch install script for my desktop (AMD)
 
-# TODO: Set up error handling. Just exit on any error, spit out a message.
+set -e
+trap 'echo "An error has occurred on line $LINENO. Exiting script."' ERR
 
 # Installation guide
 
@@ -17,7 +18,7 @@ if [ ! -d "/sys/firmware/efi/efivars" ]; then
 	exit 1 "booted into BIOS mode" $LINENO
 fi
 
-
+# "1.7 - Connect to the internet" is skipped as it is assumed that you've already done it to get to this point.
 
 # 1.8 - Update the system clock
 timedatectl set-ntp true
