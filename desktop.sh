@@ -90,7 +90,6 @@ swapon /mnt/swapfile
 
 # 2 - Installation
 # 2.1 - Select the mirrors
-# TODO: clean up reflector criterion/configuration, systemd services, timers, etc.
 pacman -Sy
 pacman -S --noconfirm reflector
 reflector "$reflectorparams"
@@ -195,7 +194,6 @@ echo -e "====PPSITS PASSWORD====\a"
 arch-chroot /mnt passwd ppsits
 
 # 1.2 - Privilege escalation
-# TODO: Turn passwords back on later, after everything is done being installed.
 sed -i "/^# %wheel ALL=(ALL) NOPASSWD: ALL/ c%wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
 
 # "1.3 - Service management" and "1.4 - System maintenance" are skipped as they are merely educational.
@@ -278,3 +276,9 @@ arch-chroot /mnt systemctl enable systemd-timesyncd.service
 # 9.3 - Solid state drives
 arch-chroot /mnt systemctl enable fstrim.timer
 
+### END OF PAGE ###
+### MAINTENANCE ###
+
+# 1.2 - Privilege escalation, part 2
+sed -i "/^%wheel ALL=(ALL) NOPASSWD: ALL/ c# %wheel ALL=(ALL) NOPASSWD: ALL" /mnt/etc/sudoers
+sed -i "/^# %wheel ALL=(ALL) ALL/ c%wheel ALL=(ALL) ALL" /mnt/etc/sudoers
