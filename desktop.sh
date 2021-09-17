@@ -9,7 +9,6 @@ trap 'echo "An error has occurred on line $LINENO. Exiting script."' ERR
 # You should read the entire script if you're looking to customize them.
 # Well, at least read the parts you are interested in changing.
 # This is for personal use by me, so I'm not going to waste my whole life making a perfectly flexible script.
-reflectorparams='-c "United States" -p https -f 5 --sort rate --save /etc/pacman.d/mirrorlist'
 hostname="pps3941-desktop"
 default_user="patch"
 
@@ -90,9 +89,8 @@ swapon /mnt/swapfile
 
 # 2 - Installation
 # 2.1 - Select the mirrors
-pacman -Sy
-pacman -S --noconfirm reflector
-reflector "$reflectorparams"
+# TODO: remove magic phrase here
+reflector -c "United States" -p https -f 5 --sort rate --save /etc/pacman.d/mirrorlist'
 
 # 2.2 - Install essential packages
 pacstrap /mnt base base-devel linux linux-zen linux-firmware networkmanager network-manager-applet nano man-db man-pages tldr texinfo amd-ucode
@@ -211,7 +209,16 @@ arch-chroot /mnt pacman -Sy
 
 # 2.3 - Mirrors
 arch-chroot /mnt su - "$default_user" -c "pacman -S --noconfirm reflector"
-echo "$reflectorparams" > /etc/xdg/reflector/reflector.conf
+
+# TODO: remove magic phrase here
+cat >> /etc/xdg/reflector/reflector.conf <<EOF
+-c "United States"
+-p https
+-f 5
+--sort rate
+--save /etc/pacman.d/mirrorlist
+EOF
+
 arch-chroot /mnt systemctl enable reflector.timer
 
 # "2.4 - Arch Build System" is skipped as it is merely educational.
