@@ -9,7 +9,7 @@ trap 'echo "An error has occurred on line $LINENO. Exiting script."' ERR
 # You should read the entire script if you're looking to customize them.
 # Well, at least read the parts you are interested in changing.
 # This is for personal use by me, so I'm not going to waste my whole life making a perfectly flexible script.
-reflectorparams='-c "United States" -p https -f 5 --sort rate --save /etc/pacman.d/mirrorlist'
+reflectorparams='--country "United States" --protocol https --fastest 5 --sort rate --save /etc/pacman.d/mirrorlist'
 hostname="pps3941-desktop"
 default_user="patch"
 
@@ -23,16 +23,18 @@ default_user="patch"
 loadkeys us
 
 # 1.6 - Verify the boot mode
+# This doesn't strictly check, however since we have set a trap, if ls errors then the program will terminate.
 ls /sys/firmware/efi/efivars
 
 # "1.7 - Connect to the internet" is skipped as it is assumed that you've already done it to get to this point.
+# More specifically, since this script is for myself, I'd prefer to clone the repo from the internet after booting.
 
 # 1.8 - Update the system clock
 timedatectl set-ntp true
 
 # 1.9 - Partition the disks
 # Partition scheme:
-# /dev/sda1	/boot	260MB	FAT32
+# /dev/sda1	/boot	512MB	FAT32
 # /dev/sda2	/	MAX	ext4
 # /dev/sdb1	/home	MAX	ext4
 
@@ -41,7 +43,7 @@ g
 n
 1
 
-+260M
++512M
 n
 2
 
@@ -94,7 +96,7 @@ pacman -S --noconfirm reflector
 reflector "$reflectorparams"
 
 # 2.2 - Install essential packages
-pacstrap /mnt base base-devel linux linux-firmware networkmanager network-manager-applet nano man-db man-pages texinfo amd-ucode
+pacstrap /mnt base base-devel linux linux-zen linux-firmware networkmanager network-manager-applet nano man-db man-pages tldr texinfo amd-ucode
 
 # 3 - Configure the system
 # 3.1 - Fstab
@@ -152,6 +154,14 @@ initrd	/initramfs-linux.img
 options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
 EOF
 
+cat > /mnt/boot/loader/entries/arch-zen.conf <<EOF
+title	Arch Linux (Zen)
+linux	/vmlinuz-linux-zen
+initrd	/amd-ucode.img
+initrd	/initramfs-linux-zen.img
+options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
+EOF
+
 mkdir /mnt/etc/pacman.d/hooks
 cat > /mnt/etc/pacman.d/hooks/100-systemd-boot-update.hook <<EOF
 [Trigger]
@@ -180,6 +190,9 @@ arch-chroot /mnt passwd patch
 arch-chroot /mnt useradd -m -G wheel pps3941
 echo -e "====PPS3941 PASSWORD====\a"
 arch-chroot /mnt passwd pps3941
+arch-chroot /mnt useradd -m -G wheel ppsits
+echo -e "====PPSITS PASSWORD====\a"
+arch-chroot /mnt passwd ppsits
 
 # 1.2 - Privilege escalation
 # TODO: Turn passwords back on later, after everything is done being installed.
@@ -199,24 +212,9 @@ rm /mnt/etc/pacman.conf.bak
 arch-chroot /mnt pacman -Sy
 
 # 2.3 - Mirrors
-# TODO: clean up reflector criterion/configuration, systemd services, timers, etc.
 arch-chroot /mnt su - "$default_user" -c "pacman -S --noconfirm reflector"
-
-cat > /mnt/etc/systemd/system/reflector.service <<EOF
-[Unit]
-Description=pacman mirrorlist update
-Wants=network-online.target
-After=network-online.target nss-lookup.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/reflector $reflectorparams
-
-[Install]
-RequiredBy=multi-user.target
-EOF
-
-arch-chroot /mnt systemctl enable reflector.service
+echo "$reflectorparams" > /etc/xdg/reflector/reflector.conf
+arch-chroot /mnt systemctl enable reflector.timer
 
 # "2.4 - Arch Build System" is skipped as it is merely educational.
 
@@ -240,7 +238,7 @@ arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm mesa lib32-mesa xf8
 # "4.3 - Desktop environments" is skipped as it is irrelevant.
 
 # 4.4 - Window managers
-arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm openbox obconf obkey tint2 xbindkeys"
+arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm openbox obconf obkey tint2"
 
 # 4.5 - Display manager
 arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm lightdm lightdm-gtk-greeter"
@@ -255,11 +253,11 @@ arch-chroot /mnt xdg-user-dirs-update
 arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm powerkit"
 
 # 5.2 - CPU frequency scaling
-arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm tlp"
-arch-chroot /mnt systemctl enable tlp.service
+#arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm tlp"
+#arch-chroot /mnt systemctl enable tlp.service
 
 # 5.3 - Laptops
-arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm brightnessctl"
+#arch-chroot /mnt su - "$default_user" -c "yay -S --noconfirm brightnessctl"
 
 # 5.4 - Suspend and hibernate
 # TODO: Move all hibernate-related code in here. This'll be annoying...
