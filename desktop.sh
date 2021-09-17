@@ -9,7 +9,7 @@ trap 'echo "An error has occurred on line $LINENO. Exiting script."' ERR
 # You should read the entire script if you're looking to customize them.
 # Well, at least read the parts you are interested in changing.
 # This is for personal use by me, so I'm not going to waste my whole life making a perfectly flexible script.
-reflectorparams='--country "United States" --protocol https --fastest 5 --sort rate --save /etc/pacman.d/mirrorlist'
+reflectorparams='-c "United States" -p https -f 5 --sort rate --save /etc/pacman.d/mirrorlist'
 hostname="pps3941-desktop"
 default_user="patch"
 
