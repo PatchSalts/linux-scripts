@@ -133,7 +133,7 @@ title	Arch Linux
 linux	/vmlinuz-linux
 initrd	/intel-ucode.img
 initrd	/initramfs-linux.img
-options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
+options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' | sed 's/\.\.//'` rw
 EOF
 
 cat > /mnt/boot/loader/entries/arch-zen.conf <<EOF
@@ -141,7 +141,7 @@ title	Arch Linux (Zen)
 linux	/vmlinuz-linux-zen
 initrd	/intel-ucode.img
 initrd	/initramfs-linux-zen.img
-options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /mnt/swapfile | awk '{ if($1=="0:"){print $4} }' | sed 's/\.\.//'` rw
+options	root=UUID=`findmnt -rno UUID /mnt/` resume=`findmnt -rno SOURCE -T /mnt/swapfile` resume_offset=`filefrag -v /swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' | sed 's/\.\.//'` rw
 EOF
 
 mkdir /mnt/etc/pacman.d/hooks
